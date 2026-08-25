@@ -1,0 +1,8 @@
+# Security exceptions are intentionally empty.
+# Any future entry must include a narrow path or purl, an issue/owner in the
+# statement, and an expired_at date. See deploy/README.md.
+vulnerabilities: []
+misconfigurations: []
+secrets: []
+licenses: []
+

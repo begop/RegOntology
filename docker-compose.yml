@@ -1,0 +1,207 @@
+name: ${COMPOSE_PROJECT_NAME:-regontology}
+
+services:
+  postgres:
+    image: ${PGVECTOR_IMAGE:-pgvector/pgvector:0.8.6-pg16-bookworm}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env.local}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env.local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.local}
+    ports:
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/010-extensions.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
+
+  neo4j:
+    image: ${NEO4J_IMAGE:-neo4j:5.26.29-community}
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:?Set NEO4J_USER in .env.local}/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env.local}
+      NEO4J_USER: ${NEO4J_USER:?Set NEO4J_USER in .env.local}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env.local}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    ports:
+      - "${NEO4J_BIND_ADDRESS:-127.0.0.1}:${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BIND_ADDRESS:-127.0.0.1}:${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cypher-shell -u \"$${NEO4J_USER}\" -p \"$${NEO4J_PASSWORD}\" 'RETURN 1' >/dev/null 2>&1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7.4.11-alpine}
+    restart: unless-stopped
+    user: redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.local}
+    command:
+      - sh
+      - -ec
+      - exec redis-server --save '' --appendonly no --requirepass "$${REDIS_PASSWORD}"
+    ports:
+      - "${REDIS_BIND_ADDRESS:-127.0.0.1}:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli --no-auth-warning -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/begop/regontology-api:local}
+    build:
+      context: .
+      dockerfile: deploy/docker/backend.Dockerfile
+      target: runtime
+    restart: unless-stopped
+    init: true
+    environment:
+      REGONTOLOGY_ENV: ${REGONTOLOGY_ENV:-development}
+      REGONTOLOGY_DEMO_AUTH_ENABLED: ${REGONTOLOGY_DEMO_AUTH_ENABLED:-true}
+      REGONTOLOGY_AI_PROVIDER: ${REGONTOLOGY_AI_PROVIDER:-fake}
+      REGONTOLOGY_REPOSITORY_MODE: ${REGONTOLOGY_REPOSITORY_MODE:-postgres}
+      REGONTOLOGY_GRAPH_MODE: ${REGONTOLOGY_GRAPH_MODE:-neo4j}
+      REGONTOLOGY_AUTO_SEED_MOCK_DATA: ${REGONTOLOGY_AUTO_SEED_MOCK_DATA:-false}
+      REGONTOLOGY_MOCK_DATA_DIR: ${REGONTOLOGY_MOCK_DATA_DIR:-/app/mock-data}
+      REGONTOLOGY_CORS_ORIGINS: ${REGONTOLOGY_CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      REGONTOLOGY_OPENAI_MODEL: ${REGONTOLOGY_OPENAI_MODEL:-gpt-5-mini}
+      REGONTOLOGY_OPENAI_BASE_URL: ${REGONTOLOGY_OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?Set POSTGRES_USER in .env.local}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.local}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env.local}
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: ${NEO4J_USER:?Set NEO4J_USER in .env.local}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env.local}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.local}@redis:6379/0
+    command:
+      - sh
+      - -ec
+      - |
+        alembic -c alembic.ini upgrade head
+        python -m app.cli seed-mock
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log
+    ports:
+      - "${API_BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
+      - data
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/begop/regontology-web:local}
+    build:
+      context: .
+      dockerfile: deploy/docker/frontend.Dockerfile
+      target: runtime
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+        VITE_DEMO_MODE: "${VITE_DEMO_MODE:-false}"
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:8080/healthz",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /var/cache/nginx:size=32m,mode=0755
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
+
+networks:
+  edge:
+  data:
+    internal: true
+
+volumes:
+  postgres-data:
+  neo4j-data:
+  neo4j-logs:

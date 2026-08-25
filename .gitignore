@@ -1,0 +1,49 @@
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+
+# JavaScript / TypeScript
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+.vite/
+playwright-report/
+test-results/
+
+# Runtime and generated artifacts
+artifacts/
+/data/
+/logs/
+/tmp/
+/uploads/
+*.log
+*.pid
+
+# IDE and operating system
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+Desktop.ini

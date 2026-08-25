@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1.7
+FROM python:3.12.14-slim-bookworm AS base
+
+ARG APP_VERSION=dev
+ARG VCS_REF=unknown
+
+LABEL org.opencontainers.image.title="RegOntology API" \
+      org.opencontainers.image.description="Grounded regulation knowledge graph QA API" \
+      org.opencontainers.image.source="https://github.com/begop/RegOntology" \
+      org.opencontainers.image.revision="$VCS_REF" \
+      org.opencontainers.image.version="$APP_VERSION"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    REGONTOLOGY_MOCK_DATA_DIR=/app/mock-data
+
+RUN groupadd --gid 10001 app \
+    && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/app \
+        --shell /usr/sbin/nologin app
+
+WORKDIR /app/backend
+
+COPY backend/requirements.txt backend/requirements-dev.txt ./
+RUN python -m pip install --no-cache-dir --requirement requirements.txt
+
+COPY --chown=10001:10001 backend/ /app/backend/
+COPY --chown=10001:10001 mock-data/ /app/mock-data/
+
+FROM base AS test
+
+RUN python -m pip install --no-cache-dir --requirement requirements-dev.txt
+USER 10001:10001
+RUN ruff check app tests \
+    && mypy --config-file pyproject.toml app \
+    && pytest -c pyproject.toml tests
+
+FROM base AS runtime
+
+USER 10001:10001
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+
