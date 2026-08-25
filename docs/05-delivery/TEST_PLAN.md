@@ -117,6 +117,10 @@ ontology assertion 제외, `as_of` 이전 edge 제외, fixed parameter Cypher와
 Neo4j outage의 vector+lexical fallback 및 5초 Compose probe 미만 timeout, projection 단일
 transaction rollback 계약을 포함한다.
 
+CI Compose smoke는 모든 컨테이너가 healthy가 된 뒤 projection seed를 다시 실행하고,
+`graph_status=healthy`이며 `graph_publication_id`가 PostgreSQL active `publication_id`와
+같은지 검증한다. 운영의 degraded-start 정책과 release gate를 구분한다.
+
 ## Performance profile
 
 - 10,000 regulation versions, 300,000 chunks, graph 규모는 seed를 비례 확장

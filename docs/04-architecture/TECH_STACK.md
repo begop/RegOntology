@@ -22,7 +22,7 @@
 | 영역 | 선택 | 이유 |
 |---|---|---|
 | Language | Python 3.12+ | FastAPI/AI/Graph 생태계와 안정적 호환성 |
-| API | FastAPI + Pydantic v2 | async typed API와 OpenAPI |
+| API | FastAPI 0.141.x + Starlette 1.6.x + Pydantic v2 | async typed API와 OpenAPI; ASGI 보안 수정 버전 직접 pin |
 | ORM/DB | SQLAlchemy 2 + psycopg 3 + Alembic | transaction, async, migration |
 | Jobs | Celery + Redis | ingestion/index/eval의 durable retry와 운영 성숙도 |
 | Graph | Neo4j driver + `neo4j-graphrag` | Cypher와 공식 GraphRAG components; custom retriever 허용 |
@@ -92,9 +92,10 @@
 
 ## 공식 참고
 
+- FastAPI 0.141.1 metadata: <https://pypi.org/pypi/fastapi/0.141.1/json>
+- Starlette 1.6.0 metadata: <https://pypi.org/pypi/starlette/1.6.0/json>
 - OpenAI 모델 선택: <https://developers.openai.com/api/docs/guides/model-selection>
 - OpenAI embedding model: <https://developers.openai.com/api/docs/models/text-embedding-3-large>
 - pgvector: <https://github.com/pgvector/pgvector>
 - Neo4j GraphRAG Python: <https://neo4j.com/docs/neo4j-graphrag-python/current/>
 - Cytoscape.js: <https://js.cytoscape.org/>
-

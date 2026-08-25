@@ -74,8 +74,16 @@
 - 이유: 현재 화면 수에서 추가 생성·빌드 의존성 없이 접근성, 반응형 layout, dark theme를 재현 가능하게 고정하는 편이 빠른 검증에 유리하다.
 - 결과: 이는 승인 기술 기준선의 명시적 MVP 예외다. 기관 디자인 시스템 통합 또는 공용 component library 확장 시 Tailwind/shadcn 도입 여부를 다시 결정하고 lockfile, 시각 회귀, 접근성 테스트를 함께 갱신한다.
 
+## ADR-013 — ASGI framework 보안 버전을 직접 고정
+
+- 결정: Backend runtime은 FastAPI `0.141.1`과 Starlette `1.6.0`을 직접 exact pin한다. FastAPI의 transitive dependency resolver에만 Starlette 선택을 맡기지 않는다.
+- 이유: 기존 Starlette `0.47.3`은 container vulnerability scan의 HIGH finding 대상이며, FastAPI `0.141.1` 공식 metadata는 `starlette>=0.46.0`을 허용한다. Starlette `1.6.0`은 보안 수정 이후 버전이지만 PyPI 분류상 Alpha이므로 compatibility 회귀 검증을 명시적으로 통과시켜야 한다.
+- 결과: 두 package 버전은 `requirements.txt`와 `pyproject.toml`에서 동기화하고, API/OpenAPI/middleware/TestClient 전체 회귀, `pip check`, runtime image scan을 release gate로 둔다. 더 안정적인 fixed Starlette release로 변경할 때도 동일 검증을 수행한다.
+
 ## 근거 자료
 
+- FastAPI 0.141.1 official package metadata: <https://pypi.org/pypi/fastapi/0.141.1/json>
+- Starlette 1.6.0 official package metadata: <https://pypi.org/pypi/starlette/1.6.0/json>
 - OpenAI 공식 문서는 모델 선택 시 정확도 목표와 평가 데이터셋을 먼저 정하고 이후 비용/지연을 최적화하도록 설명한다: <https://developers.openai.com/api/docs/guides/model-selection>
 - pgvector 공식 저장소는 exact search와 HNSW/IVFFlat approximate index를 제공한다: <https://github.com/pgvector/pgvector>
 - Neo4j의 공식 GraphRAG Python 문서: <https://neo4j.com/docs/neo4j-graphrag-python/current/>

@@ -9,13 +9,14 @@ description = "Mock-first regulation knowledge graph and grounded QA API"
 requires-python = ">=3.12"
 dependencies = [
   "alembic==1.16.5",
-  "fastapi==0.116.1",
+  "fastapi==0.141.1",
   "httpx==0.28.1",
   "neo4j==5.28.2",
   "pgvector==0.4.1",
   "psycopg[binary]==3.2.9",
   "pydantic==2.11.7",
   "SQLAlchemy==2.0.43",
+  "starlette==1.6.0",
   "uvicorn[standard]==0.35.0",
 ]
 

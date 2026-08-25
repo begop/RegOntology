@@ -209,7 +209,44 @@ jobs:
           sed -i 's/CHANGE_ME_REDIS_PASSWORD/ci-redis-only/g' .env.ci
 
       - name: Validate Compose configuration
-        run: docker compose --env-file .env.ci config --quiet
+        shell: python
+        run: |
+          import json
+          import subprocess
+
+          command = [
+              "docker",
+              "compose",
+              "--env-file",
+              ".env.ci",
+              "config",
+              "--format",
+              "json",
+          ]
+          result = subprocess.run(command, capture_output=True, text=True, check=False)
+          if result.returncode:
+              print(result.stderr)
+              raise SystemExit(result.returncode)
+
+          services = json.loads(result.stdout)["services"]
+          neo4j_environment = services["neo4j"]["environment"]
+          forbidden = {"NEO4J_USER", "NEO4J_PASSWORD"} & set(neo4j_environment)
+          if forbidden:
+              raise SystemExit(
+                  "Neo4j container received unsupported strict-config variables: "
+                  + ", ".join(sorted(forbidden))
+              )
+          if "NEO4J_AUTH" not in neo4j_environment:
+              raise SystemExit("Neo4j container is missing NEO4J_AUTH.")
+
+          api_environment = services["api"]["environment"]
+          required_api = {"NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD"}
+          missing_api = required_api - set(api_environment)
+          if missing_api:
+              raise SystemExit(
+                  "API container is missing Neo4j client variables: "
+                  + ", ".join(sorted(missing_api))
+              )
 
       - name: Start stack and run health checks
         shell: bash
@@ -221,7 +258,12 @@ jobs:
           }
           trap cleanup EXIT
           docker compose --env-file .env.ci up --detach --build --wait --wait-timeout 300
-          curl --fail --show-error --silent http://127.0.0.1:8000/api/v1/health >/dev/null
+          # The runtime intentionally starts in degraded mode when Neo4j is late or down.
+          # CI is stricter: once every service is healthy, rebuild the projection and
+          # require its watermark to match the active PostgreSQL publication.
+          docker compose --env-file .env.ci exec --no-TTY api python -m app.cli seed-mock
+          curl --fail --show-error --silent http://127.0.0.1:8000/api/v1/health \
+            | python -c 'import json, sys; payload = json.load(sys.stdin); assert payload["graph_status"] == "healthy", payload; assert payload["graph_publication_id"] == payload["publication_id"], payload'
           curl --fail --show-error --silent http://127.0.0.1:8080/healthz >/dev/null
 
   publish:

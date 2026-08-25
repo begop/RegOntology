@@ -13,6 +13,15 @@ from app.domain.models import KnowledgeSnapshot
 _CONNECTION_TIMEOUT_SECONDS = 1.0
 _CONNECTION_ACQUISITION_TIMEOUT_SECONDS = 1.0
 _MAX_TRANSACTION_RETRY_SECONDS = 1.0
+_ADDRESS_RESOLUTION_ERROR_PREFIX = "Cannot resolve address "
+
+
+def _is_runtime_connectivity_error(error: Exception) -> bool:
+    if isinstance(error, DriverError | Neo4jError):
+        return True
+    return isinstance(error, ValueError) and str(error).startswith(
+        _ADDRESS_RESOLUTION_ERROR_PREFIX
+    )
 
 
 class Neo4jProjectionAdapter:
@@ -37,7 +46,9 @@ class Neo4jProjectionAdapter:
     def healthcheck(self) -> bool:
         try:
             self._driver.verify_connectivity()
-        except (DriverError, Neo4jError) as exc:
+        except (DriverError, Neo4jError, ValueError) as exc:
+            if not _is_runtime_connectivity_error(exc):
+                raise
             raise ConfigurationError("Neo4j projection is unavailable.") from exc
         return True
 
@@ -74,7 +85,9 @@ class Neo4jProjectionAdapter:
                     node_count=len(nodes),
                     edge_count=len(edges),
                 )
-        except (DriverError, Neo4jError) as exc:
+        except (DriverError, Neo4jError, ValueError) as exc:
+            if not _is_runtime_connectivity_error(exc):
+                raise
             raise ConfigurationError("Neo4j projection rebuild failed.") from exc
         return {
             "publication_id": snapshot.publication_id,
@@ -145,7 +158,9 @@ class Neo4jProjectionAdapter:
         try:
             with self._driver.session() as session:
                 record = session.run(query).single()
-        except (DriverError, Neo4jError):
+        except (DriverError, Neo4jError, ValueError) as exc:
+            if not _is_runtime_connectivity_error(exc):
+                raise
             return GraphProjectionStatus(status="unavailable", publication_id=None)
         projected = record.get("publication_id") if record is not None else None
         if not isinstance(projected, str):
@@ -210,7 +225,9 @@ class Neo4jProjectionAdapter:
                     max_edges=bounded_max_edges,
                 )
                 return tuple(dict(record) for record in result)
-        except (DriverError, Neo4jError) as exc:
+        except (DriverError, Neo4jError, ValueError) as exc:
+            if not _is_runtime_connectivity_error(exc):
+                raise
             raise ConfigurationError("Neo4j bounded query failed.") from exc
 
     def close(self) -> None:

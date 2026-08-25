@@ -144,6 +144,49 @@ class FakeDriver:
         self.closed = True
 
 
+class ValueErrorSession:
+    def __init__(self, message: str):
+        self.message = message
+
+    def __enter__(self) -> ValueErrorSession:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        return None
+
+    def execute_write(self, *_: object, **__: object) -> None:
+        raise ValueError(self.message)
+
+    def run(self, *_: object, **__: object) -> FakeResult:
+        raise ValueError(self.message)
+
+
+class ValueErrorDriver:
+    def __init__(self, message: str):
+        self.message = message
+
+    def verify_connectivity(self) -> None:
+        raise ValueError(self.message)
+
+    def session(self) -> ValueErrorSession:
+        return ValueErrorSession(self.message)
+
+    def close(self) -> None:
+        return None
+
+
+def call_one_hop(adapter: Neo4jProjectionAdapter) -> None:
+    adapter.one_hop(
+        publication_id="publication-A",
+        seed_ids=("doc:A",),
+        allowed_node_ids=("doc:A", "org:A"),
+        allowed_edge_ids=("e01",),
+        allowed_document_ids=("A",),
+        relation_types=("OWNED_BY",),
+        max_edges=10,
+    )
+
+
 def test_pgvector_scope_is_principal_and_request_intersection() -> None:
     assert effective_document_scope(frozenset({"A", "B"}), frozenset({"B", "C"})) == frozenset(
         {"B"}
@@ -304,6 +347,41 @@ def test_compose_seed_retries_graph_then_degrades_without_blocking_postgres(
     assert eventual.calls == 3
     assert _project_with_startup_retry(unavailable, snapshot) == "degraded"  # type: ignore[arg-type]
     assert unavailable.calls == 10
+
+
+def test_dns_resolution_value_error_degrades_all_neo4j_runtime_paths(
+    mock_data_dir: Path,
+    monkeypatch: Any,
+) -> None:
+    snapshot = MockKnowledgeRepository(mock_data_dir).snapshot
+    driver = ValueErrorDriver("Cannot resolve address neo4j:7687")
+    adapter = Neo4jProjectionAdapter("bolt://unused", "unused", "unused", driver=driver)  # type: ignore[arg-type]
+
+    with pytest.raises(ConfigurationError, match="projection is unavailable"):
+        adapter.healthcheck()
+    with pytest.raises(ConfigurationError, match="projection rebuild failed"):
+        adapter.replace_projection(snapshot)
+    assert adapter.status(snapshot.publication_id).status == "unavailable"
+    with pytest.raises(ConfigurationError, match="bounded query failed"):
+        call_one_hop(adapter)
+
+    monkeypatch.setattr("app.cli.sleep", lambda _: None)
+    assert _project_with_startup_retry(adapter, snapshot) == "degraded"
+
+
+def test_unrelated_value_error_is_not_hidden_as_neo4j_outage(mock_data_dir: Path) -> None:
+    snapshot = MockKnowledgeRepository(mock_data_dir).snapshot
+    driver = ValueErrorDriver("programmer invariant failed")
+    adapter = Neo4jProjectionAdapter("bolt://unused", "unused", "unused", driver=driver)  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="programmer invariant failed"):
+        adapter.healthcheck()
+    with pytest.raises(ValueError, match="programmer invariant failed"):
+        adapter.replace_projection(snapshot)
+    with pytest.raises(ValueError, match="programmer invariant failed"):
+        adapter.status(snapshot.publication_id)
+    with pytest.raises(ValueError, match="programmer invariant failed"):
+        call_one_hop(adapter)
 
 
 def test_canonical_metadata_contains_vector_and_audit_tables() -> None:
