@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpenText,
+  Box,
   CheckCircle2,
   ChevronRight,
   CircleDot,
@@ -18,10 +19,12 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { OntologyGraph } from "../components/OntologyGraph";
+import { OntologyGraph3D } from "../components/OntologyGraph3D";
 import { Badge, EmptyState, ErrorState, LoadingState, PageHeader } from "../components/ui";
 import { useAppContext } from "../context/AppContext";
 import { getOntologyGraph } from "../lib/api";
 import { nodeTypeLabel, relationLabel } from "../lib/format";
+import { DEFAULT_CAMERA_3D } from "../lib/ontology3d";
 
 const availableTypes = ["Obligation", "Prohibition", "Permission", "Organization", "Actor", "System", "Control", "Risk", "RegulationDocument"];
 
@@ -32,9 +35,10 @@ function sourceLink(documentId: string | undefined, locator: string | undefined)
 }
 
 export function OntologyPage() {
-  const { asOf } = useAppContext();
+  const { asOf, theme } = useAppContext();
   const [params, setParams] = useSearchParams();
-  const [view, setView] = useState<"graph" | "list">(() => (window.innerWidth < 768 ? "list" : "graph"));
+  const [view, setView] = useState<"2d" | "3d" | "list">(() => (window.innerWidth < 768 ? "list" : "2d"));
+  const [camera3D, setCamera3D] = useState(() => ({ ...DEFAULT_CAMERA_3D }));
   const [query, setQuery] = useState("");
   const [enabledTypes, setEnabledTypes] = useState(() => new Set(availableTypes));
   const graphQuery = useQuery({ queryKey: ["ontology", asOf], queryFn: () => getOntologyGraph(asOf) });
@@ -74,12 +78,24 @@ export function OntologyPage() {
   function reset() {
     setQuery("");
     setEnabledTypes(new Set(availableTypes));
+    setCamera3D({ ...DEFAULT_CAMERA_3D });
     setParams({});
   }
 
   return (
     <div className="page ontology-page">
-      <PageHeader eyebrow="Knowledge graph" title="Ontology Explorer" description="규정의 의무·주체·시스템·통제 관계를 조문 provenance와 함께 탐색합니다." actions={<div className="view-switch" role="group" aria-label="보기 방식"><button className={view === "graph" ? "active" : ""} onClick={() => setView("graph")}><Grid3X3 /> 그래프</button><button className={view === "list" ? "active" : ""} onClick={() => setView("list")}><List /> 접근 가능한 목록</button></div>} />
+      <PageHeader
+        eyebrow="Knowledge graph"
+        title="Ontology Explorer"
+        description="규정 관계를 2D 그래프, 3D 입체 캔버스, 접근 가능한 목록으로 탐색하고 조문 provenance를 확인합니다."
+        actions={(
+          <div className="view-switch" role="group" aria-label="Ontology 보기 방식">
+            <button type="button" className={view === "2d" ? "active" : ""} aria-pressed={view === "2d"} onClick={() => setView("2d")}><Grid3X3 /> 2D 그래프</button>
+            <button type="button" className={view === "3d" ? "active" : ""} aria-pressed={view === "3d"} onClick={() => setView("3d")}><Box /> 3D 캔버스</button>
+            <button type="button" className={view === "list" ? "active" : ""} aria-pressed={view === "list"} onClick={() => setView("list")}><List /> 접근 가능한 목록</button>
+          </div>
+        )}
+      />
 
       {graphQuery.isPending ? <LoadingState label="Ontology projection을 불러오고 있습니다." /> : null}
       {graphQuery.isError ? <ErrorState retry={() => void graphQuery.refetch()} /> : null}
@@ -95,14 +111,16 @@ export function OntologyPage() {
 
           <section className="ontology-main" aria-label="Ontology 결과">
             <div className="graph-toolbar"><div><Network /><strong>Regulation knowledge graph</strong><Badge tone="success">APPROVED</Badge></div><div><span>Nodes <strong>{visibleGraph.nodes.length}</strong>/200</span><span>Edges <strong>{visibleGraph.edges.length}</strong></span><span>1 hop</span></div></div>
-            {visibleGraph.nodes.length === 0 ? <EmptyState title="일치하는 노드가 없습니다." action={<button className="button button--secondary" onClick={reset}>필터 초기화</button>} /> : view === "graph" ? (
+            {visibleGraph.nodes.length === 0 ? <EmptyState title="일치하는 노드가 없습니다." action={<button className="button button--secondary" onClick={reset}>필터 초기화</button>} /> : view === "2d" ? (
               <OntologyGraph nodes={visibleGraph.nodes} edges={visibleGraph.edges} selectedId={selectedId} onSelect={selectNode} />
+            ) : view === "3d" ? (
+              <OntologyGraph3D nodes={visibleGraph.nodes} edges={visibleGraph.edges} selectedId={selectedId} onSelect={selectNode} onRequestList={() => setView("list")} camera={camera3D} setCamera={setCamera3D} theme={theme} />
             ) : (
               <div className="ontology-list-view">
                 <table><caption className="sr-only">Ontology 노드 목록</caption><thead><tr><th scope="col">노드</th><th scope="col">유형</th><th scope="col">근거 규정</th><th scope="col">연결</th><th scope="col"><span className="sr-only">선택</span></th></tr></thead><tbody>{visibleGraph.nodes.map((node) => <tr key={node.id} className={selectedId === node.id ? "selected" : ""}><td><span className={`node-swatch node-swatch--${node.type.toLowerCase()}`} /><strong>{node.label}</strong></td><td>{nodeTypeLabel(node.type)}</td><td>{node.sourceDocument || "—"}<small>{node.sourceLocator}</small></td><td>{visibleGraph.edges.filter((edge) => edge.source === node.id || edge.target === node.id).length}개</td><td><button onClick={() => selectNode(node.id)}>상세 <ChevronRight /></button></td></tr>)}</tbody></table>
               </div>
             )}
-            <div className="graph-statusbar"><div><span className="status-dot status-dot--ok" /> Projection 동기화됨</div><span>Watermark {visibleGraph.watermark}</span><span>최대 200 nodes · 깊이 1–2</span></div>
+            <div className="graph-statusbar"><div><span className="status-dot status-dot--ok" /> Projection 동기화됨</div><span>{view === "3d" ? "3D perspective" : view === "2d" ? "2D graph" : "Accessible list"}</span><span>Watermark {visibleGraph.watermark}</span><span>최대 200 nodes · 깊이 1–2</span></div>
           </section>
 
           <aside className="node-detail-panel" aria-label="선택한 노드 상세">
@@ -114,7 +132,7 @@ export function OntologyPage() {
                 <section className="provenance-card"><div className="section-title-inline"><h3>근거 provenance</h3><ShieldCheck /></div><dl><div><dt>문서</dt><dd>{selectedProvenance.documentId || "승인 메타데이터"}</dd></div><div><dt>위치</dt><dd>{selectedProvenance.locator || "metadata"}</dd></div><div><dt>검토 상태</dt><dd>APPROVED</dd></div></dl><Link className="button button--primary button--full" to={sourceLink(selectedProvenance.documentId, selectedProvenance.locator)}><BookOpenText /> 근거 조문 열기</Link></section>
                 <button className="button button--secondary button--full"><Focus /> 이 노드에서 1-hop 확장</button>
               </>
-            ) : <EmptyState title="노드를 선택해 주세요." description="그래프 또는 접근 가능한 목록에서 노드를 선택하면 관계와 근거를 표시합니다." />}
+            ) : <EmptyState title="노드를 선택해 주세요." description="2D·3D 그래프 또는 접근 가능한 목록에서 노드를 선택하면 관계와 근거를 표시합니다." />}
           </aside>
         </div>
       ) : null}

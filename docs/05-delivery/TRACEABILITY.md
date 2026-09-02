@@ -16,7 +16,7 @@
 | FR-010 | Citation/Detail | API/Data | T-140, T-570 | deep-link E2E |
 | FR-011 | Library | API/Data | T-140, T-160 | filter/ACL/as-of |
 | FR-012 | Compare | API/Data | T-260 | structural diff cases |
-| FR-013 | Explorer | Ontology/API | T-450, T-460 | bounded graph E2E |
+| FR-013 | Explorer 2D/3D/list | Ontology/API | T-450, T-460 | bounded graph + deterministic 3D projection + view state tests |
 | FR-014 | Explorer/QA | Ontology/RAG | T-410~450, T-500 | entity/path eval |
 | FR-015 | QA feedback | API/Data | T-570 | authorization/idempotency |
 | FR-016 | Audit | Security/Data | T-170, T-560 | audit completeness |
@@ -29,4 +29,3 @@
 | NFR-011~015 | Governance | Tech/Security/Deploy | T-010~050, T-630~670 | scans/DR/portability/privacy |
 
 새 requirement는 최소 하나의 acceptance criterion, implementation task, primary verification을 추가해야 Baseline이 된다.
-

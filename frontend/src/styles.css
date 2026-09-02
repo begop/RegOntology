@@ -435,6 +435,7 @@ button:disabled { cursor: not-allowed; opacity: .54; }
 .view-switch button { display: inline-flex; min-height: 37px; align-items: center; gap: 6px; border: 0; border-right: 1px solid var(--border); padding: 0 11px; background: transparent; color: var(--text-muted); font-size: .66rem; }
 .view-switch button:last-child { border-right: 0; }
 .view-switch button.active { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+.view-switch button svg { width: 15px; }
 .ontology-layout { display: grid; grid-template-columns: 220px minmax(430px, 1fr) 278px; min-height: 700px; overflow: hidden; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-raised); box-shadow: var(--shadow-sm); }
 .ontology-filters { padding: 14px; border-right: 1px solid var(--border); background: var(--surface); }
 .ontology-search { display: flex; align-items: center; height: 40px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; background: var(--surface-raised); }
@@ -474,6 +475,25 @@ button:disabled { cursor: not-allowed; opacity: .54; }
 .graph-toolbar > div:last-child strong { color: var(--text-secondary); }
 .cytoscape-shell { position: relative; flex: 1; min-height: 590px; overflow: hidden; background: radial-gradient(circle, color-mix(in srgb, var(--border) 65%, transparent) 1px, transparent 1px); background-size: 18px 18px; }
 .cytoscape-canvas { position: absolute; inset: 0; }
+.ontology-3d-shell { --ontology-3d-edge: #8195a7; --ontology-3d-selected: #ff9d2e; --ontology-3d-label-bg: rgba(247, 250, 252, .9); --ontology-3d-label: #15344e; position: relative; flex: 1; min-height: 590px; overflow: hidden; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--brand-soft) 56%, transparent), transparent 52%), linear-gradient(155deg, var(--surface-raised), var(--surface-inset)); }
+.ontology-3d-shell::before { position: absolute; inset: 0; background-image: linear-gradient(color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px); background-size: 28px 28px; content: ""; opacity: .42; pointer-events: none; transform: perspective(500px) rotateX(60deg) scale(1.45); transform-origin: 50% 75%; }
+[data-theme="dark"] .ontology-3d-shell { --ontology-3d-edge: #89a1b5; --ontology-3d-label-bg: rgba(15, 29, 42, .92); --ontology-3d-label: #dbe8f2; }
+.ontology-3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.ontology-3d-canvas.is-dragging { cursor: grabbing; }
+.ontology-3d-canvas[aria-hidden="true"] { pointer-events: none; opacity: .16; }
+.ontology-3d-controls { position: absolute; right: 12px; bottom: 12px; display: grid; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--surface-raised) 92%, transparent); box-shadow: var(--shadow-sm); backdrop-filter: blur(8px); }
+.ontology-3d-controls button { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text-secondary); }
+.ontology-3d-controls button:last-child { border-bottom: 0; }
+.ontology-3d-controls button:hover { background: var(--surface-soft); }
+.ontology-3d-controls button:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
+.ontology-3d-node-picker { position: absolute; left: 12px; bottom: 12px; display: grid; gap: 4px; max-width: min(290px, calc(100% - 78px)); border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; background: color-mix(in srgb, var(--surface-raised) 92%, transparent); box-shadow: var(--shadow-sm); backdrop-filter: blur(8px); }
+.ontology-3d-node-picker label { color: var(--text-muted); font-size: .56rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.ontology-3d-node-picker select { min-width: 220px; max-width: 100%; border: 0; border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: .62rem; }
+.ontology-3d-node-picker select:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 45%, transparent); outline-offset: 3px; }
+.ontology-3d-hint { position: absolute; top: 12px; left: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; background: color-mix(in srgb, var(--surface-raised) 88%, transparent); color: var(--text-muted); font-size: .55rem; letter-spacing: .025em; backdrop-filter: blur(8px); }
+.ontology-3d-error { position: absolute; inset: 50% auto auto 50%; z-index: 2; width: min(360px, calc(100% - 32px)); transform: translate(-50%, -50%); border: 1px solid var(--border-strong); border-radius: 10px; padding: 18px; background: var(--surface-raised); box-shadow: var(--shadow-md); text-align: center; }
+.ontology-3d-error strong { font-size: .75rem; }
+.ontology-3d-error p { margin: 7px 0 13px; color: var(--text-muted); font-size: .63rem; line-height: 1.5; }
 .graph-zoom-controls { position: absolute; right: 12px; bottom: 12px; display: grid; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-raised); box-shadow: var(--shadow-sm); }
 .graph-zoom-controls button { display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text-secondary); }
 .graph-zoom-controls button:last-child { border-bottom: 0; }
@@ -616,6 +636,11 @@ button:disabled { cursor: not-allowed; opacity: .54; }
   .dashboard-columns, .qa-layout { grid-template-columns: 1fr; }
   .qa-side-panel { grid-template-columns: repeat(3, 1fr); }
   .regulation-detail-layout { grid-template-columns: 160px minmax(380px, 1fr); }
+  .ontology-layout { grid-template-columns: 1fr; overflow: visible; }
+  .ontology-filters { border-right: 0; border-bottom: 1px solid var(--border); }
+  .type-filter-list { grid-template-columns: 1fr 1fr; }
+  .node-detail-panel { grid-column: auto; display: block; border-top: 1px solid var(--border); }
+  .node-detail-panel > section { margin-top: 17px; border-top: 1px solid var(--border); border-left: 0; padding: 15px 0 0; }
   .admin-metrics { grid-template-columns: repeat(2, 1fr); }
   .operations-strip { grid-template-columns: 1fr; }
   .operations-strip > div { border-right: 0; border-bottom: 1px solid var(--border); }
@@ -681,14 +706,9 @@ button:disabled { cursor: not-allowed; opacity: .54; }
   .feedback-control { flex-wrap: wrap; }
   .trace-panel { grid-template-columns: 1fr; }
   .qa-side-panel { grid-template-columns: 1fr; }
-  .ontology-layout { grid-template-columns: 1fr; overflow: visible; }
-  .ontology-filters { border-right: 0; border-bottom: 1px solid var(--border); }
-  .type-filter-list { grid-template-columns: 1fr 1fr; }
   .ontology-main { min-height: 560px; }
   .graph-toolbar { align-items: flex-start; flex-direction: column; }
-  .cytoscape-shell { min-height: 480px; }
-  .node-detail-panel { grid-column: auto; display: block; border-top: 1px solid var(--border); }
-  .node-detail-panel > section { margin-top: 17px; border-top: 1px solid var(--border); border-left: 0; padding: 15px 0 0; }
+  .cytoscape-shell, .ontology-3d-shell { min-height: 480px; }
   .graph-statusbar span:last-child { display: none; }
   .admin-metrics { grid-template-columns: 1fr 1fr; }
   .ingestion-detail { display: block; }
@@ -696,6 +716,12 @@ button:disabled { cursor: not-allowed; opacity: .54; }
 }
 
 @media (max-width: 460px) {
+  .view-switch { display: grid; width: 100%; grid-template-columns: 1fr 1fr; overflow: visible; }
+  .view-switch button { justify-content: center; border-bottom: 1px solid var(--border); }
+  .view-switch button:nth-child(2) { border-right: 0; }
+  .view-switch button:last-child { grid-column: 1 / -1; border-bottom: 0; }
+  .ontology-3d-node-picker { right: 58px; max-width: none; }
+  .ontology-3d-node-picker select { width: 100%; min-width: 0; }
   .page-header__actions .demo-notice { flex: 1; }
   .metric-grid, .admin-metrics { grid-template-columns: 1fr; }
   .hero-evidence { padding: 13px; }

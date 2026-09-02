@@ -2,11 +2,11 @@
 
 상태: Baseline
 
-## 현재 구현 스냅샷 — 2026-08-25
+## 현재 구현 스냅샷 — 2026-09-02
 
 이 문서의 phase/task 전체를 완료로 간주하지 않는다. 현재 저장소는 기획을 검증하는 **Mock-first executable MVP**이며 다음 vertical slice를 구현한다.
 
-- 구현·검증: 규정 Markdown seed/구조 조회, 기준일·ACL 필터, PostgreSQL/pgvector 정본 profile, 재구축 가능한 Neo4j projection과 bounded graph lane, hybrid retrieval, 근거 citation/검증/보류 QA, 규정·QA·Ontology UI, 감사·요청 ID, Docker Compose와 GHCR CI/CD
+- 구현·검증: 규정 Markdown seed/구조 조회, 기준일·ACL 필터, PostgreSQL/pgvector 정본 profile, 재구축 가능한 Neo4j projection과 bounded graph lane, hybrid retrieval, 근거 citation/검증/보류 QA, 규정·QA·Ontology UI(2D/3D/list), 감사·요청 ID, Docker Compose와 GHCR CI/CD
 - 정적 데모: GitHub Pages/Sites UI는 embedded mock response만 사용하며 FastAPI·PostgreSQL·Neo4j의 원격 상태를 나타내지 않는다.
 - 후속 구현 필요: 기관 OIDC/Keycloak login UI, 실제 파일 upload/object storage/malware scan, curator review·원자적 publication workflow, Celery ingestion worker, version diff·feedback·SSE conversation, OpenTelemetry/성능·복구 훈련
 - 운영 금지: Phase 6 pilot readiness와 기관 보안·법무 승인이 끝나기 전에는 실제 규정 또는 production 서비스로 표시하지 않는다.
@@ -94,7 +94,7 @@ Gate P3: Golden retrieval 목표와 security/temporal violation 0.
 | T-430 | proposal review API/UI | FR-004 | approve/edit/reject audit E2E |
 | T-440 | Neo4j projection builder/watermark/validator | FR-005, FR-018 | rebuild/count/checksum |
 | T-450 | bounded graph query templates/API | FR-013, FR-014 | depth/node/ACL tests |
-| T-460 | Cytoscape Ontology Explorer + list fallback | FR-013, NFR-009 | graph/list/accessibility E2E |
+| T-460 | Cytoscape 2D + Canvas2D 원근 투영 3D Ontology Explorer + list fallback | FR-013, NFR-009 | 결정적 projection unit, 2D/3D/list 상태 동기화와 accessibility component test |
 
 Gate P4: seed ontology와 projection checksum 일치, Restricted derived node leak 0, viewer 200 node budget.
 

@@ -64,9 +64,10 @@
 1. 개념/조직/통제/문서/조문을 검색한다.
 2. 중심 node와 1-hop subgraph를 불러온다.
 3. node type, relation type, 규정, 효력일로 필터한다.
-4. node를 선택해 정의, provenance, 관련 조문을 본다.
-5. `확장`으로 다음 1-hop을 추가하거나 두 node path를 조회한다.
-6. `조문 열기`로 원문 상세로 이동한다.
+4. `2D 그래프`, `3D 캔버스`, `접근 가능한 목록` 중 보기를 선택한다. 전환해도 필터와 선택 node는 유지된다.
+5. node를 선택해 정의, provenance, 관련 조문을 본다. 3D에서는 drag로 회전하고 wheel 또는 버튼으로 zoom하며 keyboard picker로도 node를 선택할 수 있다.
+6. `확장`으로 다음 1-hop을 추가하거나 두 node path를 조회한다.
+7. `조문 열기`로 원문 상세로 이동한다.
 
 ### 그래프 안전장치
 
@@ -75,6 +76,7 @@
 - 200 nodes 도달 시 더 구체적인 필터 안내
 - 색만으로 의미를 구분하지 않고 shape/label/legend 병행
 - 동일 정보를 list/table로 제공
+- 3D는 연속 animation/자동 회전을 사용하지 않고 Canvas context 실패 시 설명과 목록 전환 버튼 제공
 
 ## Flow D — Ingestion/Review/Publish
 
@@ -96,7 +98,7 @@
 | Regulation List | search, facet, result, pagination | URL로 필터 공유 가능 |
 | Regulation Detail | TOC, article body, metadata, relations | stable locator deep link |
 | QA Chat | composer, status, answer, citations, feedback | keyboard-only 이용 가능 |
-| Ontology Explorer | search, graph, legend, detail, list | bounded subgraph와 대체 뷰 |
+| Ontology Explorer | search, 2D graph, 3D canvas, legend, detail, list | bounded subgraph, 보기 간 상태 동기화와 대체 뷰 |
 | Ingestion Review | stepper, diff, issue list, suggestion table | blocker 0건 전 publish 비활성 |
 | Evaluation | run config, metric diff, failed cases | baseline 대비 회귀 식별 |
 | Audit | filters, event table, detail | 권한 기반 redaction |
@@ -105,13 +107,13 @@
 
 - Desktop ≥ 1280px: 3-pane detail/graph 경험 최적화
 - Tablet 768–1279px: detail panel을 drawer로 전환
-- Mobile < 768px: QA와 규정 원문 읽기 지원, graph canvas는 list-first; curator workflow는 desktop 권장
+- Mobile < 768px: QA와 규정 원문 읽기 지원, 2D/3D graph canvas는 list-first이며 명시적으로 선택 가능; curator workflow는 desktop 권장
 
 ## 접근성
 
 - landmark, heading, focus order와 visible focus 준수
 - graph node를 검색 가능한 목록으로 동기화
+- 3D canvas에 screen reader 조작 설명과 keyboard focus 가능한 회전/zoom/reset controls, node picker 제공
 - citation은 링크 텍스트에 문서/locator 포함
 - status는 색뿐 아니라 icon/text/ARIA live로 전달
 - animation은 reduced-motion 선호를 준수
-

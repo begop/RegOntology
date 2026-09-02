@@ -59,10 +59,11 @@
 | AC-FR-009-01 | FR-009 | 데이터에 없는 질문에는 답을 만들지 않고 `insufficient_evidence`를 반환한다. |
 | AC-FR-010-01 | FR-010 | citation 선택 시 정확한 버전/locator로 이동하고 인용 구절이 강조된다. |
 | AC-FR-013-01 | FR-013 | node 선택 시 1-hop 관계와 관련 조문이 표시되며 최대 node 제한을 넘지 않는다. |
+| AC-FR-013-02 | FR-013 | 사용자가 2D 그래프, 3D 입체 캔버스, 접근 가능한 목록을 전환해도 동일한 ACL/기준일/검색/유형 필터 결과와 선택 node·provenance가 유지된다. |
 | AC-FR-017-01 | FR-017 | Restricted 권한이 없는 사용자의 모든 검색, graph, citation에 해당 문서가 나타나지 않는다. |
 | AC-FR-019-01 | FR-019 | 동일 snapshot/config/seed에서 eval 결과와 trace artifact를 재생성할 수 있다. |
 | AC-NFR-002-01 | NFR-002 | citation이 answer claim을 지지하지 않으면 verifier가 응답을 차단한다. |
 | AC-NFR-003-01 | NFR-003 | 시행일 전/종료일 후 질문에서 해당 버전이 검색되지 않는다. |
+| AC-NFR-009-01 | NFR-009 | 3D 캔버스는 자동 회전 없이 동작하고 키보드 node 선택과 동기화된 list/detail을 제공하며, Canvas 초기화 실패 시 목록 전환 경로를 표시한다. |
 
 전체 story 수준 수용 기준은 `USER_STORIES.md`, 테스트 매핑은 `../05-delivery/TEST_PLAN.md`에서 관리한다.
-

@@ -32,7 +32,7 @@
 | FR-006~007 | chunk/embedding/index/fusion unit + retrieval eval |
 | FR-008~010 | QA schema/citation/verifier/abstention + chat E2E |
 | FR-011~012 | regulation API/UI/as-of/diff tests |
-| FR-013~014 | ontology constraints/projection/query/viewer tests |
+| FR-013~014 | ontology constraints/projection/query, deterministic 3D projection, 2D/3D/list viewer state tests |
 | FR-015~016 | feedback/audit authorization and retention tests |
 | FR-017 | token/role/document scope matrix across every lane |
 | FR-018 | job idempotency/retry/watermark/rebuild/chaos |
@@ -131,6 +131,8 @@ CI Compose smoke는 모든 컨테이너가 healthy가 된 뒤 projection seed를
 ## Accessibility/E2E
 
 - keyboard-only: 로그인, 검색, 질문, citation, graph list, curator review
+- Ontology: 2D/3D/list selector `aria-pressed`, 동일 필터·선택·provenance 동기화, 3D keyboard node picker와 Canvas 실패 시 list 전환
+- 3D projection pure unit: empty/single/disconnected/200-node 결정성, finite 좌표, zoom/depth projection
 - screen reader semantics와 live status
 - 200% zoom/320px width, light/dark, reduced motion
 - Chromium/Firefox/WebKit latest supported CI profile

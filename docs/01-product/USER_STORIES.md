@@ -36,6 +36,7 @@
 준법 담당자로서 특정 의무가 어느 조직·통제·시스템과 연결되는지 graph로 보고 싶다.
 
 - AC: node/edge 유형과 관련 조문을 확인할 수 있다.
+- AC: 동일한 필터·선택 상태에서 2D 그래프, 3D 입체 캔버스, 접근 가능한 목록을 전환할 수 있다.
 - AC: 확장 수와 hop에 제한이 있으며 path가 설명된다.
 - 연결: FR-013, FR-014
 
@@ -98,4 +99,3 @@ Curator로서 validation을 통과한 snapshot만 사용자에게 공개하고 �
 - AC: rebuild가 진행되는 동안 기존 watermark 또는 명시적 degraded mode를 사용한다.
 - AC: rebuild 결과 node/edge count와 checksum을 검증한다.
 - 연결: FR-018, NFR-008, NFR-012
-

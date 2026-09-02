@@ -84,7 +84,7 @@
 ### 구성
 
 - 검색/필터 bar: node type, 규정, 부서, 효력일
-- graph canvas: node/edge type별 시각 인코딩
+- graph canvas: Cytoscape 2D와 Canvas2D 원근 투영 3D를 선택 버튼으로 전환하고 node/edge type별 시각 인코딩 공유
 - detail drawer: 정의, 관계, 관련 조문, provenance, 검토 상태
 - path panel: 두 node 사이 제한 길이 경로
 - list/table 대체 뷰
@@ -92,6 +92,8 @@
 ### 상호작용
 
 - 초기에는 검색 결과 중심 최대 50 node
+- 2D 그래프, 3D 캔버스, 접근 가능한 목록을 전환해도 검색·필터·선택 node와 detail/provenance 유지
+- 3D 캔버스는 drag orbit, wheel/button zoom, camera reset과 keyboard node picker 제공; 자동 회전은 사용하지 않음
 - 1-hop 확장, 최대 200 node/session view
 - 의무/금지/예외 edge를 구분
 - node에서 근거 조문으로 이동
@@ -139,4 +141,3 @@
 - ingestion lead time과 review backlog
 
 질문 본문 analytics는 별도 동의/정책에 따라 비식별화하거나 저장하지 않을 수 있다.
-

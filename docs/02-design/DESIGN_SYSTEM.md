@@ -62,9 +62,11 @@
 
 ### GraphCanvas
 
-- legend, zoom control, fit, reset, layout selector
+- 보기 selector는 `2D 그래프`, `3D 캔버스`, `접근 가능한 목록`을 분명히 구분하고 현재 상태를 `aria-pressed`로 전달
+- 2D는 Cytoscape layout/zoom/fit, 3D는 결정적 volume seed와 bounded relation-aware force 좌표를 Canvas2D 원근 투영으로 표시하며 drag orbit/zoom/reset 제공
 - selection은 URL/session state와 detail drawer에 동기화
-- edge 방향과 label을 표시
+- 2D/3D 모두 edge 방향과 node type별 color+shape를 표시하고 선택 node 및 연결 edge를 강조
+- 3D는 keyboard node picker와 조작 설명을 제공하고 자동 회전을 사용하지 않으며 renderer 실패 시 list 전환 안내
 
 ### DataStatusBadge
 
@@ -86,4 +88,4 @@
 - 모든 semantic status가 색 없이 구분됨
 - Korean 긴 제목/조문이 겹치거나 잘리지 않음
 - graph 200 nodes에서 UI가 멈추지 않고 대체 list가 동작
-
+- 2D/3D/list 전환 후 filter, selection, detail, provenance가 유지됨
