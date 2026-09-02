@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
 
@@ -41,6 +41,12 @@ def _create_contract_tables(engine: Engine) -> None:
             QACitationRow.__table__,
         ],
     )
+
+
+def _enable_sqlite_foreign_keys(dbapi_connection: Any, _: Any) -> None:
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 
 def _seed_active_and_stale_rows(engine: Engine) -> None:
@@ -322,9 +328,12 @@ def test_vector_query_requires_active_publication_membership(
 
 def test_postgres_qa_store_survives_adapter_restart(tmp_path: Path) -> None:
     database_path = tmp_path / "qa-persistence.db"
+    setup_engine = create_engine(f"sqlite:///{database_path}")
+    _create_contract_tables(setup_engine)
+    _seed_active_and_stale_rows(setup_engine)
+    setup_engine.dispose()
     first_engine = create_engine(f"sqlite:///{database_path}")
-    _create_contract_tables(first_engine)
-    _seed_active_and_stale_rows(first_engine)
+    event.listen(first_engine, "connect", _enable_sqlite_foreign_keys)
     result = QAResult(
         query_id="query-1",
         status="answered",

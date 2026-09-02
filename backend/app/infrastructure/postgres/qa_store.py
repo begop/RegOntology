@@ -55,6 +55,10 @@ class PostgresQAResultStore:
                         publication_id=publication_id,
                     )
                 )
+                # The citation mapper intentionally has no ORM relationship to the run.
+                # Flush the parent explicitly so databases with enforced foreign keys
+                # cannot schedule citation inserts before the qa_run row exists.
+                session.flush()
                 session.add_all(
                     [
                         QACitationRow(
