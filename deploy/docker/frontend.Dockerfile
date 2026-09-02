@@ -32,9 +32,9 @@ FROM build AS nginx-assets
 
 RUN rm -rf /app/frontend/dist/server /app/frontend/dist/.openai
 
-# Alpine 3.24 carries libcrypto3/libssl3 3.5.7-r0. Pin the verified
+# Alpine 3.24 carries patched libcrypto3/libssl3 3.5.8-r0. Pin the verified
 # multi-architecture manifest so weekly upstream tag rebuilds cannot change CI.
-FROM ghcr.io/nginx/nginx-unprivileged:1.30.4-alpine3.24-slim@sha256:e88d990b349df8cf4aa82f16642d7a23375016638c9ace4e5c6ca25028e62e65 AS runtime
+FROM ghcr.io/nginx/nginx-unprivileged:1.30.4-alpine3.24-slim@sha256:11f3f6249b4ae3d7a4ec2a51797060107b88ead52b33b6ed3c6c33f55ca96200 AS runtime
 
 ARG APP_VERSION=dev
 ARG VCS_REF=unknown
