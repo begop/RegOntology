@@ -15,6 +15,30 @@ $envPath = if ([System.IO.Path]::IsPathRooted($EnvFile)) {
 } else {
     Join-Path $repoRoot $EnvFile
 }
+$script:DockerCommand = $null
+
+function Resolve-DockerCommand {
+    $pathCommand = Get-Command docker -ErrorAction SilentlyContinue
+    if ($pathCommand) {
+        return $pathCommand.Source
+    }
+
+    $candidates = @()
+    if ($env:LOCALAPPDATA) {
+        $candidates += Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin\docker.exe"
+    }
+    if ($env:ProgramFiles) {
+        $candidates += Join-Path $env:ProgramFiles "Docker\Docker\resources\bin\docker.exe"
+    }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
 
 function New-UrlSafeSecret {
     $bytes = New-Object byte[] 32
@@ -70,20 +94,26 @@ function Assert-EnvironmentFile {
 }
 
 function Assert-Docker {
-    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    $script:DockerCommand = Resolve-DockerCommand
+    if (-not $script:DockerCommand) {
         throw "Docker CLI was not found. Install and start Docker Desktop, then retry."
     }
 
-    & docker compose version *> $null
+    & $script:DockerCommand compose version *> $null
     if ($LASTEXITCODE -ne 0) {
         throw "Docker Compose v2 is required."
+    }
+
+    & $script:DockerCommand info --format "{{.ServerVersion}}" *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Docker Desktop is installed, but its Linux container engine is not running. Start Docker Desktop, then retry."
     }
 }
 
 function Invoke-Compose {
     param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
 
-    & docker compose --project-directory $repoRoot --env-file $envPath @Arguments
+    & $script:DockerCommand compose --project-directory $repoRoot --env-file $envPath @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "docker compose failed with exit code $LASTEXITCODE."
     }
@@ -92,7 +122,7 @@ function Invoke-Compose {
 function Invoke-DockerBuild {
     param([string]$Dockerfile, [string]$Target, [string]$Tag)
 
-    & docker build --file (Join-Path $repoRoot $Dockerfile) --target $Target --tag $Tag $repoRoot
+    & $script:DockerCommand build --file (Join-Path $repoRoot $Dockerfile) --target $Target --tag $Tag $repoRoot
     if ($LASTEXITCODE -ne 0) {
         throw "docker build failed for $Dockerfile with exit code $LASTEXITCODE."
     }

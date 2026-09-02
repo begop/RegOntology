@@ -197,7 +197,9 @@ services:
 networks:
   edge:
   data:
-    internal: true
+    # This is the local verification profile. Service ports remain bound to
+    # 127.0.0.1, while a routable bridge lets Docker Desktop publish the
+    # documented PostgreSQL, Neo4j, and Redis diagnostic endpoints.
 
 volumes:
   postgres-data:

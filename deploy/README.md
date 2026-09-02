@@ -9,7 +9,12 @@ This directory contains the local Docker Compose profile and the container build
 - At least 4 GB of memory available to Docker
 - Free loopback ports `8080`, `8000`, `5432`, `7474`, `7687`, and `6379`
 
-The data-service ports are bound to `127.0.0.1`, not to every host interface. The application containers run without Linux capabilities and with read-only root filesystems. PostgreSQL and Neo4j keep their local state in named Docker volumes.
+`scripts/dev.ps1` first uses `docker` from `PATH`. If the current PowerShell
+session has not picked up Docker Desktop's PATH update yet, it also discovers
+the standard per-user and all-users Docker Desktop CLI locations automatically.
+Docker Desktop itself must still be running with the Linux container engine.
+
+The data-service ports are bound to `127.0.0.1`, not to every host interface. The local data bridge is routable so Docker Desktop can publish those loopback-only diagnostic ports; it is not the production network design. The application containers run without Linux capabilities and with read-only root filesystems. PostgreSQL and Neo4j keep their local state in named Docker volumes.
 
 ## Start the complete stack
 
